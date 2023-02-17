@@ -33,7 +33,7 @@ spec:
           - name: SERVICE_NAME
             value: rating-service
           - name: OTEL_EXPORTER_OTLP_ENDPOINT
-            value: http://otel-collector:5555
+            value: http://collector-service:5555
         ports:
         - containerPort: 9083
         resources:

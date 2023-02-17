@@ -24,7 +24,7 @@ spec:
           - name: RATING_URL
             value: http://rating-service:8080
           - name: OTEL_EXPORTER_OTLP_ENDPOINT
-            value: http://otel-collector:5555
+            value: http://collector-service:5555
           - name: OTEL_RESOURCE_ATTRIBUTES
             value: service.name=restaurant-service,service.version=1.0
           - name: OTEL_TRACES_EXPORTER

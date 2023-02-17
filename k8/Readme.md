@@ -27,3 +27,10 @@ To check if your images is actually loaded into kind cluster do following
 
 
 > kind delete cluster --name food-order 
+
+To apply all yml in a directory
+
+> kubectl apply --recursive -f .
+
+To port forward service 
+> kubectl port-forward svc/prometheus-service 9090:9090

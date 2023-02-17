@@ -1,0 +1,11 @@
+config:
+  target: "http://localhost"
+  phases:
+    - arrivalRate: 1
+ 
+scenarios:
+  - name: "Introduce random errors"
+    flow:
+      - get:
+          url: "/order/dummy/error/random"
+

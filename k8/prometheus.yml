@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+ name: prometheus-config
+data:
+ prometheus: |
+  global:
+    # How frequently to scrape targets
+    scrape_interval: 15s
+    # How frequently to evaluate rules
+    evaluation_interval: 15s
+
+  # Rules and alerts are read from the specified file(s)
+  rule_files:
+    - rules.yaml
+
+  scrape_configs:
+    - job_name: 'collector'
+      scrape_interval: 5s
+      static_configs:
+        - targets: [ 'collector-service:6666' ]
+
+ rules: |
+  groups:
+    - name: APM-Test
+      rules:
+        - alert: High Latency for service order-services
+          expr: (rate(default_latency_sum{span_kind=~"SPAN_KIND_SERVER",http_method=~"GET|POST|PUT|DELETE", http_route='/v1/order/{orderId}'}[1m])/rate(default_latency_count{span_kind=~"SPAN_KIND_SERVER",http_method=~"GET|POST|PUT|DELETE", http_route='/v1/order/{orderId}'}[1m])) > 5
+          for: 5m
+          annotations:
+            title: High Latency for service order-services
+            description: High Latency for service order-services
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  labels:
+    app: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      #volumes:
+      #  - name: test-volume
+      #    hostPath:
+      #      # directory location on host
+      #      path: /configurations/configuration
+      #      type: Directory
+      volumes :
+        - name: prometheus-config-vol
+          configMap:
+            name: prometheus-config
+            items:
+              - key : prometheus
+                path: prometheus.yaml
+              - key : rules
+                path: rules.yaml
+      containers:
+      - name: prometheus
+        image: prom/prometheus:latest
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - mountPath: /data
+            name: prometheus-config-vol
+        command:
+          - '/bin/prometheus'
+          - '--config.file=/data/prometheus.yaml'
+          - '--web.enable-remote-write-receiver'
+          - '--enable-feature=exemplar-storage'
+        #command: [ "--config=/data/otel-agent-config.yaml" ]
+        ports:
+          - containerPort: 9090
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-service
+  namespace: default
+spec:
+  type: ClusterIP #NodePort #LoadBalancer
+  selector:
+    app: prometheus
+  ports:
+  - port: 9090
+    targetPort: 9090

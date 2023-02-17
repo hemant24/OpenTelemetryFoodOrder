@@ -30,7 +30,7 @@ data:
         endpoint: 0.0.0.0:6666
         namespace: default
       otlp:
-        endpoint: tempo:4317
+        endpoint: tempo-service:4317
         tls:
           insecure: true
 
@@ -91,6 +91,9 @@ spec:
         #command: [ "--config=/data/otel-agent-config.yaml" ]
         ports:
           - containerPort: 5555
+            name: "otel-grpc"
+          - containerPort : 6666
+            name : "prometheus"
         
 ---
 
@@ -102,7 +105,11 @@ metadata:
 spec:
   type: ClusterIP #NodePort #LoadBalancer
   selector:
-    app: postgres
+    app: collector
   ports:
   - port: 5555
     targetPort: 5555
+    name : "otel-grpc"
+  - port: 6666
+    targetPort: 6666
+    name : "prometheus"

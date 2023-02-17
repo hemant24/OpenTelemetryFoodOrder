@@ -19,7 +19,7 @@ data:
       block_retention: 0s
  tempo-config: |
   server:
-  http_listen_port: 3200
+    http_listen_port: 3200
 
   distributor:
     search_tags_deny_list:
@@ -88,12 +88,6 @@ spec:
       labels:
         app: tempo
     spec:
-      #volumes:
-      #  - name: test-volume
-      #    hostPath:
-      #      # directory location on host
-      #      path: /configurations/configuration
-      #      type: Directory
       volumes :
         - name: tempo-config-vol
           configMap:
@@ -110,9 +104,9 @@ spec:
         volumeMounts:
           - mountPath: /data
             name: tempo-config-vol
-        command: 
+        command:
+          - '/tempo'
           - '-config.file=/data/tempo-config.yaml'
-        #command: [ "--config=/data/otel-agent-config.yaml" ]
         ports:
           - containerPort: 3200
             name: "status-port"
