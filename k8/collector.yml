@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+ name: otel-agent-conf
+data:
+ otel-agent-config: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:5555
+
+    processors:
+      spanmetrics:
+        metrics_exporter: prometheus
+        #latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 100ms, 250ms]
+        dimensions:
+          - name: http.method
+            #default: GET
+          - name: http.status_code
+          - name: http.route
+          - name: otel.library.name
+        dimensions_cache_size: 1000
+        aggregation_temporality: "AGGREGATION_TEMPORALITY_CUMULATIVE"   
+
+    exporters:
+      logging:
+        loglevel: debug
+      prometheus:
+        endpoint: 0.0.0.0:6666
+        namespace: default
+      otlp:
+        endpoint: tempo:4317
+        tls:
+          insecure: true
+
+    service:
+      pipelines:
+        metrics:
+          receivers: [otlp]
+          exporters: [logging, prometheus]
+        traces:
+          receivers: [otlp]
+          exporters: [logging, otlp]
+        traces/dummy:
+          receivers: [otlp]
+          processors: [spanmetrics]
+          exporters: [logging]
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: collector
+  labels:
+    app: collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: collector
+  template:
+    metadata:
+      labels:
+        app: collector
+    spec:
+      #volumes:
+      #  - name: test-volume
+      #    hostPath:
+      #      # directory location on host
+      #      path: /configurations/configuration
+      #      type: Directory
+      volumes :
+        - name: otel-agent-config-vol
+          configMap:
+            name: otel-agent-conf
+            items:
+              - key: otel-agent-config
+                path: otel-agent-config.yaml
+      containers:
+      - name: collector
+        image: otel/opentelemetry-collector-contrib:latest
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - mountPath: /data
+            name: otel-agent-config-vol
+        command:
+           - '/otelcol-contrib'
+           - '--config=/data/otel-agent-config.yaml'
+        #command: [ "--config=/data/otel-agent-config.yaml" ]
+        ports:
+          - containerPort: 5555
+        
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: collector-service
+  namespace: default
+spec:
+  type: ClusterIP #NodePort #LoadBalancer
+  selector:
+    app: postgres
+  ports:
+  - port: 5555
+    targetPort: 5555

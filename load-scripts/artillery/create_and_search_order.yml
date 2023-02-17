@@ -1,0 +1,42 @@
+config:
+  target: "http://localhost:8080"
+  phases:
+    - arrivalRate: 1
+ 
+scenarios:
+  - name: "Search order"
+    flow:
+      - post :
+          url : "http://localhost:9081/v1/restaurant/"
+          json:
+            name: "Mother's Kitchen"
+            menuItems: 
+              - name : "Dal"
+                foodType : "VEG"
+                price : 150
+          capture:
+            - json: $.id
+              as: restaurantId
+      - post :
+          url : "http://localhost:9083/v1/rating/restaurant/"
+          json:
+            restaurantId: "{{restaurantId}}"
+            rating: 4
+      - get:
+          url: "http://localhost:9081/v1/restaurant/{{restaurantId}}"
+          capture:
+            - json: $.menuItems[0].menuItemId
+              as: menuItemId
+      - post :
+          url : "/v1/order/"
+          json:
+            restaurantId: "{{restaurantId}}"
+            items: 
+              - quantity : 1
+                menuItemId : "{{menuItemId}}"
+          capture:
+            - json: $.id
+              as: orderId
+      - get:
+          url: "/v1/order/{{orderId}}"
+

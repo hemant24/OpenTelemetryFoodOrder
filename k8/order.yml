@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order
+  labels:
+    app: order
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order
+  template:
+    metadata:
+      labels:
+        app: order
+    spec:
+      containers:
+      - name: order
+        image: hemant24/order:latest
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: SPRING_DATASOURCE_URL
+            value: jdbc:postgresql://postgres-service:5432/orders
+          - name: RESTAURANT_URL
+            value: http://restaurant-service:8080
+          - name: OTEL_EXPORTER_OTLP_ENDPOINT
+            value: http://otel-collector:5555
+          - name: OTEL_RESOURCE_ATTRIBUTES
+            value: service.name=order-service,service.version=1.0
+          - name: OTEL_TRACES_EXPORTER
+            value: otlp
+          - name: OTEL_METRICS_EXPORTER
+            value: otlp
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: "250Mi"
+            cpu: "100m"
+          limits:
+            memory: "350Mi"
+            cpu: "300m"
+
+
+---
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: default
+spec:
+  type: ClusterIP #NodePort #LoadBalancer
+  selector:
+    app: order
+  ports:
+  - port: 8080
+    targetPort: 8080

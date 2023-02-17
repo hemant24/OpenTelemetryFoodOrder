@@ -1,0 +1,42 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:5555
+
+processors:
+  spanmetrics:
+    metrics_exporter: prometheus
+    #latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 100ms, 250ms]
+    dimensions:
+      - name: http.method
+        #default: GET
+      - name: http.status_code
+      - name: http.route
+      - name: otel.library.name
+    dimensions_cache_size: 1000
+    aggregation_temporality: "AGGREGATION_TEMPORALITY_CUMULATIVE"   
+
+exporters:
+  logging:
+    loglevel: debug
+  prometheus:
+    endpoint: otel-collector:6666
+    namespace: default
+  otlp:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      exporters: [logging, prometheus]
+    traces:
+      receivers: [otlp]
+      exporters: [logging, otlp]
+    traces/dummy:
+      receivers: [otlp]
+      processors: [spanmetrics]
+      exporters: [logging]

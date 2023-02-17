@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rating
+  labels:
+    app: rating
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rating
+  template:
+    metadata:
+      labels:
+        app: rating
+    spec:
+      volumes:
+        - name: test-volume
+          hostPath:
+            # directory location on host
+            path: /configurations/configuration
+            type: Directory
+      containers:
+      - name: rating
+        image: hemant24/rating:latest
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - mountPath: /data
+            name: test-volume
+        env:
+          - name: DB
+            value: mongodb://mongo-service/rating
+          - name: SERVICE_NAME
+            value: rating-service
+          - name: OTEL_EXPORTER_OTLP_ENDPOINT
+            value: http://otel-collector:5555
+        ports:
+        - containerPort: 9083
+        resources:
+          requests:
+            memory: "250Mi"
+            cpu: "100m"
+          limits:
+            memory: "350Mi"
+            cpu: "300m"
+
+
+---
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: rating-service
+  namespace: default
+spec:
+  type: ClusterIP #NodePort #LoadBalancer
+  selector:
+    app: rating
+  ports:
+  - port: 8080
+    targetPort: 9083

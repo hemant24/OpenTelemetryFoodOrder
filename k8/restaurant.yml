@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: restaurant
+  labels:
+    app: restaurant
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: restaurant
+  template:
+    metadata:
+      labels:
+        app: restaurant
+    spec:
+      containers:
+      - name: restaurant
+        image: hemant24/restaurant:latest
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: SPRING_DATASOURCE_URL
+            value: jdbc:postgresql://postgres-service:5432/restaurant
+          - name: RATING_URL
+            value: http://rating-service:8080
+          - name: OTEL_EXPORTER_OTLP_ENDPOINT
+            value: http://otel-collector:5555
+          - name: OTEL_RESOURCE_ATTRIBUTES
+            value: service.name=restaurant-service,service.version=1.0
+          - name: OTEL_TRACES_EXPORTER
+            value: otlp
+          - name: OTEL_METRICS_EXPORTER
+            value: otlp
+        ports:
+        - containerPort: 9081
+        resources:
+          requests:
+            memory: "250Mi"
+            cpu: "100m"
+          limits:
+            memory: "350Mi"
+            cpu: "300m"
+
+
+---
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: restaurant-service
+  namespace: default
+spec:
+  type: ClusterIP #NodePort #LoadBalancer
+  selector:
+    app: restaurant
+  ports:
+  - port: 8080
+    targetPort: 9081
