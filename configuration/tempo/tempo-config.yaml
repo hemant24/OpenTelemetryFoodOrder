@@ -48,4 +48,5 @@ storage:
       queue_depth: 10000
 
 overrides:
-  per_tenant_override_config: /data/tempo/tempo-overrides.yaml
+  #per_tenant_override_config: /data/tempo/tempo-overrides.yaml
+  per_tenant_override_config: /etc/overrides.yaml
