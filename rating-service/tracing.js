@@ -7,8 +7,8 @@ const {
 } = require("@opentelemetry/auto-instrumentations-node");
 
 const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http');
-const { MongoDBInstrumentation } = require('@opentelemetry/instrumentation-mongodb')
-const { MongooseInstrumentation } = require('@opentelemetry/instrumentation-mongoose');
+//const { MongoDBInstrumentation } = require('@opentelemetry/instrumentation-mongodb')
+//const { MongooseInstrumentation } = require('@opentelemetry/instrumentation-mongoose');
 
 
 const {

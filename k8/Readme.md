@@ -6,8 +6,12 @@
 > kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
 
 > docker build -t hemant24/rating:latest .
+> docker build -t hemant24/restaurant:latest .
+> docker build -t hemant24/order:latest .
 
 > kind load docker-image hemant24/rating:latest --name food-order
+> kind load docker-image hemant24/restaurant:latest --name food-order
+> kind load docker-image hemant24/order:latest --name food-order
 
 To check if your images is actually loaded into kind cluster do following
 

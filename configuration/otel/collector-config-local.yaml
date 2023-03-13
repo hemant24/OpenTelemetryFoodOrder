@@ -18,12 +18,16 @@ processors:
     dimensions_cache_size: 1000
     aggregation_temporality: "AGGREGATION_TEMPORALITY_CUMULATIVE"   
 
+#https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/prometheusexporter
 exporters:
   logging:
     loglevel: debug
   prometheus:
-    endpoint: otel-collector:6666
+    endpoint: ':6666'
     namespace: default
+    enable_open_metrics : true
+    resource_to_telemetry_conversion :
+      enabled : false
   otlp:
     endpoint: tempo:4317
     tls:
