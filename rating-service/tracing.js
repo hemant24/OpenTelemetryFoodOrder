@@ -1,6 +1,11 @@
 const process = require('process');
-//const { diag, DiagConsoleLogger, DiagLogLevel } =require('@opentelemetry/api');
+
+/* This is for enabling debug logs
+const { diag, DiagConsoleLogger, DiagLogLevel } =require('@opentelemetry/api');
+diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
+*/
 const opentelemetry = require("@opentelemetry/sdk-node");
+const { ConsoleSpanExporter } = require('@opentelemetry/sdk-trace-base');
 
 const {
   getNodeAutoInstrumentations,
@@ -8,28 +13,47 @@ const {
 
 const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http');
 const { MongoDBInstrumentation } = require('@opentelemetry/instrumentation-mongodb')
-const { MongooseInstrumentation } = require('@opentelemetry/instrumentation-mongoose');
+//const { MongooseInstrumentation } = require('@opentelemetry/instrumentation-mongoose'); Mongoose is not supported for node <= 12
 
+/*
+const {
+  OTLPTraceExporter,
+} = require("@opentelemetry/exporter-trace-otlp-grpc"); // Some error with grpc for node <=12
+
+*/
 
 const {
   OTLPTraceExporter,
-} = require("@opentelemetry/exporter-trace-otlp-grpc");
+} = require("@opentelemetry/exporter-trace-otlp-http");
+
+
+const traceExporter = new ConsoleSpanExporter();
 
 
 const { MeterProvider, PeriodicExportingMetricReader, View, 
   HistogramAggregation, InstrumentType, Aggregation } = require('@opentelemetry/sdk-metrics');
 
+/*
 const { 
   OTLPMetricExporter 
-} = require('@opentelemetry/exporter-metrics-otlp-grpc');
+} = require('@opentelemetry/exporter-metrics-otlp-grpc'); // Some error with grpc for node <=12
+*/
+
+
+const { 
+  OTLPMetricExporter 
+} = require('@opentelemetry/exporter-metrics-otlp-http');
+
 
 const { Resource } = require('@opentelemetry/resources');
 const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions');
 
 const { HistogramAggregator } = require('@opentelemetry/sdk-metrics/build/src/aggregator');
 
-const collectorUrl = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? 'http://localhost:5555';
+const collectorUrl = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? 'http://localhost:5556';
 const serviceName = process.env.SERVICE_NAME ?? 'rating-service';
+
+console.log(collectorUrl)
 
 
 //diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
@@ -56,14 +80,17 @@ const sdk = new opentelemetry.NodeSDK({
     [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
   }),
   //traceExporter,
+  
   metricReader : new PeriodicExportingMetricReader({
     exporter: metricExporter,
     exportIntervalMillis: 1000,
-  }) ,
+  }),
   //metricExporter,
+  //traceExporter : traceExporter
+  
   traceExporter: new OTLPTraceExporter({
     // optional - default url is http://localhost:4318/v1/traces
-    url: collectorUrl,
+    url: collectorUrl + '/v1/traces',
     // optional - collection of custom headers to be sent with each request, empty by default
     headers: {},
   })

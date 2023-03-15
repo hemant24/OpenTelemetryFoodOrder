@@ -4,6 +4,8 @@ receivers:
     protocols:
       grpc:
         endpoint: 0.0.0.0:5555
+      http:
+        endpoint: 0.0.0.0:5556
 
 processors:
   spanmetrics:

@@ -6,10 +6,11 @@ services:
     environment:
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_METRICS_EXPORTER=otlp
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:5555
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:5556
       - OTEL_RESOURCE_ATTRIBUTES=service.name=order-service,service.version=1.0
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/order
       - RESTAURANT_URL=http://restaurant-service:9081
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
     ports :
       - "8080:8080"
     logging:
@@ -23,10 +24,11 @@ services:
     environment:
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_METRICS_EXPORTER=otlp
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:5555
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:5556
       - OTEL_RESOURCE_ATTRIBUTES=service.name=restaurant-service,service.version=1.0
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/restaurant
-      - RATING_URL=http://rating-service:9081
+      - RATING_URL=http://rating-service:9083
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
     ports :
       - "9081:9081"
     logging:
@@ -40,7 +42,7 @@ services:
     environment:
       - DB=mongodb://mongo/rating
       - SERVICE_NAME=rating-service
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:5555
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:5556
     ports :
       - "9083:9083"
     logging:
@@ -85,7 +87,8 @@ services:
 
   # Collector
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
+    #image: otel/opentelemetry-collector-contrib:latest
+    image : otel/opentelemetry-collector-contrib:0.50.0
     #command: [ "--config=/etc/otel-collector-config.yaml" ]
     command: [ "--config=/data/otel/collector-config-local.yaml" ]
     #volumes:
@@ -98,6 +101,7 @@ services:
       #- "8889:8889"   # Prometheus exporter metrics
       #- "13133:13133" # health_check extension
       - "5555:5555"   # OTLP gRPC receiver
+      - "5556:5556"   # http receiver
       #- "4318:4318"   # OTLP http receiver
       #- "55679:55679" # zpages extension
 

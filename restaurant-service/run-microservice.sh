@@ -4,8 +4,9 @@ mvn clean package -Dmaven.test.skip=true
 
 export OTEL_TRACES_EXPORTER=otlp
 export OTEL_METRICS_EXPORTER=otlp
-export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:5555
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:5556
 export OTEL_RESOURCE_ATTRIBUTES=service.name=restaurant-service,service.version=1.0
+export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf # grpc
 
 #https://opentelemetry.io/docs/instrumentation/java/automatic/agent-config/
 export OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED=true
