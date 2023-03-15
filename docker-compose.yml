@@ -26,7 +26,7 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:5555
       - OTEL_RESOURCE_ATTRIBUTES=service.name=restaurant-service,service.version=1.0
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/restaurant
-      - RATING_URL=http://rating-service:9081
+      - RATING_URL=http://rating-service:9083
     ports :
       - "9081:9081"
     logging:
