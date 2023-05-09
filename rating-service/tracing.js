@@ -50,8 +50,8 @@ const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventi
 
 const { HistogramAggregator } = require('@opentelemetry/sdk-metrics/build/src/aggregator');
 
-const collectorUrl = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? 'http://localhost:5556';
-const serviceName = process.env.SERVICE_NAME ?? 'rating-service';
+const collectorUrl = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ? process.env.OTEL_EXPORTER_OTLP_ENDPOINT : 'http://localhost:5556';
+const serviceName = process.env.SERVICE_NAME ? process.env.SERVICE_NAME :  'rating-service';
 
 console.log(collectorUrl)
 

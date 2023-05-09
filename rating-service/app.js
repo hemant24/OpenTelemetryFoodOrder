@@ -4,9 +4,9 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const restaurantRoutes = require('./routes/restaurant');
 const dummyRoutes = require('./routes/dummy');
-const port = process.env.APP_PORT ?? '9083';
+const port = process.env.APP_PORT ? process.env.APP_PORT :  '9083';
 
-const mongoString = process.env.DB  ?? "mongodb://127.0.0.1/rating";
+const mongoString = process.env.DB  ? process.env.DB : "mongodb://127.0.0.1/rating";
 
 mongoose.connect(mongoString);
 const database = mongoose.connection;
