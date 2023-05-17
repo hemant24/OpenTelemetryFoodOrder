@@ -1,0 +1,198 @@
+---
+# Source: opentelemetry-collector/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: collector-service
+  labels:
+    helm.sh/chart: opentelemetry-collector-0.54.2
+    app.kubernetes.io/name: opentelemetry-collector
+    app.kubernetes.io/instance: opentelemetry-collector
+    app.kubernetes.io/version: "0.75.0"
+    app.kubernetes.io/managed-by: Helm
+---
+# Source: opentelemetry-collector/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: collector-service
+  labels:
+    helm.sh/chart: opentelemetry-collector-0.54.2
+    app.kubernetes.io/name: opentelemetry-collector
+    app.kubernetes.io/instance: opentelemetry-collector
+    app.kubernetes.io/version: "0.75.0"
+    app.kubernetes.io/managed-by: Helm
+data:
+  relay: |
+    exporters:
+      logging:
+        loglevel: debug
+      prometheus:
+        endpoint: 0.0.0.0:6666
+        namespace: default
+    extensions:
+      health_check: {}
+      memory_ballast:
+        size_in_percentage: 40
+    processors:
+      batch: {}
+      memory_limiter:
+        check_interval: 5s
+        limit_percentage: 80
+        spike_limit_percentage: 25
+      spanmetrics:
+        aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE
+        dimensions:
+        - name: http.method
+        - name: http.status_code
+        - name: http.route
+        - name: otel.library.name
+        dimensions_cache_size: 1000
+        metrics_exporter: prometheus
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: ${MY_POD_IP}:5555
+    service:
+      extensions:
+      - health_check
+      - memory_ballast
+      pipelines:
+        metrics:
+          exporters:
+          - logging
+          - prometheus
+          processors:
+          - memory_limiter
+          - batch
+          receivers:
+          - otlp
+        traces/dummy:
+          exporters:
+          - logging
+          processors:
+          - spanmetrics
+          receivers:
+          - otlp
+      telemetry:
+        metrics:
+          address: ${MY_POD_IP}:8888
+---
+# Source: opentelemetry-collector/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: collector-service
+  labels:
+    helm.sh/chart: opentelemetry-collector-0.54.2
+    app.kubernetes.io/name: opentelemetry-collector
+    app.kubernetes.io/instance: opentelemetry-collector
+    app.kubernetes.io/version: "0.75.0"
+    app.kubernetes.io/managed-by: Helm
+    component: standalone-collector
+spec:
+  type: ClusterIP
+  ports: 
+    
+    - name: col-metrics
+      port: 8888
+      targetPort: 8888
+      protocol: TCP
+    - name: otlp
+      port: 5555
+      targetPort: 5555
+      protocol: TCP
+      appProtocol: grpc
+    - name: prometheus
+      port: 6666
+      targetPort: 6666
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: opentelemetry-collector
+    app.kubernetes.io/instance: opentelemetry-collector
+    component: standalone-collector
+---
+# Source: opentelemetry-collector/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: collector-service
+  labels:
+    helm.sh/chart: opentelemetry-collector-0.54.2
+    app.kubernetes.io/name: opentelemetry-collector
+    app.kubernetes.io/instance: opentelemetry-collector
+    app.kubernetes.io/version: "0.75.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: opentelemetry-collector
+      app.kubernetes.io/instance: opentelemetry-collector
+      component: standalone-collector
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        checksum/config: ebdce7fd029a98bdbac6dde4998171ca99cedeb6fe2267d8e1ba2ac8f27f1032
+        prometheus.io/path: /metrics
+        prometheus.io/port: port
+        prometheus.io/scheme: http
+        prometheus.io/scrape: "true"
+      labels:
+        app.kubernetes.io/name: opentelemetry-collector
+        app.kubernetes.io/instance: opentelemetry-collector
+        component: standalone-collector
+        
+    spec:
+      
+      serviceAccountName: collector-service
+      securityContext:
+        {}
+      containers:
+        - name: opentelemetry-collector
+          command:
+            - /otelcol-contrib
+            - --config=/conf/relay.yaml
+          securityContext:
+            {}
+          image: "otel/opentelemetry-collector-contrib:0.75.0"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: col-metrics
+              containerPort: 8888
+              protocol: TCP
+            - name: otlp
+              containerPort: 5555
+              protocol: TCP
+            - name: prometheus
+              containerPort: 6666
+              protocol: TCP
+          env:
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          volumeMounts:
+            - mountPath: /conf
+              name: opentelemetry-collector-configmap
+      volumes:
+        - name: opentelemetry-collector-configmap
+          configMap:
+            name: collector-service
+            items:
+              - key: relay
+                path: relay.yaml
+      hostNetwork: false

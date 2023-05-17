@@ -1,0 +1,81 @@
+mode: deployment
+fullnameOverride: "collector-service"
+podAnnotations: 
+  prometheus.io/scrape: 'true'
+  prometheus.io/port: 'port'
+  prometheus.io/path: '/metrics'
+  prometheus.io/scheme: 'http'
+ports:
+  jaeger-compact:
+    enabled: false
+  jaeger-thrift:
+    enabled: false
+  jaeger-grpc:
+    enabled: false
+  zipkin:
+    enabled: false
+  otlp:
+    enabled: true
+    containerPort: 5555
+    servicePort: 5555
+    hostPort: 5555
+  otlp-http:
+    enabled: false
+  prometheus:
+    enabled: true
+    containerPort: 6666
+    servicePort: 6666
+    hostPort: 6666
+    protocol: TCP
+  col-metrics:
+    enabled: true
+    containerPort: 8888
+    servicePort: 8888
+    hostPort: 8888
+    protocol: TCP
+config:
+  processors:
+    spanmetrics:
+        metrics_exporter: prometheus
+        #latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 100ms, 250ms]
+        dimensions:
+          - name: http.method
+            #default: GET
+          - name: http.status_code
+          - name: http.route
+          - name: otel.library.name
+        dimensions_cache_size: 1000
+        aggregation_temporality: "AGGREGATION_TEMPORALITY_CUMULATIVE"   
+  receivers:
+    jaeger: null
+    prometheus: null
+    zipkin: null
+    otlp:
+      protocols:
+        grpc:
+          endpoint: ${MY_POD_IP}:5555
+        http: null
+  exporters:
+      logging:
+        loglevel: debug
+      prometheus:
+        endpoint: 0.0.0.0:6666
+        namespace: default
+      otlp:
+        endpoint: tempo-service:4317
+        tls:
+          insecure: true
+  service:
+    pipelines:
+      logs : null
+      metrics:
+        receivers: [otlp]
+        exporters: [logging, prometheus]
+      traces: null
+      traces: 
+        receivers: [otlp]
+        exporters: [logging, otlp]
+      traces/dummy:
+        receivers: [otlp]
+        processors: [spanmetrics]
+        exporters: [logging]

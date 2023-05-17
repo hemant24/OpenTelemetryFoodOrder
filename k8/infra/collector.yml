@@ -80,7 +80,7 @@ spec:
                 path: otel-agent-config.yaml
       containers:
       - name: collector
-        image: otel/opentelemetry-collector-contrib:latest
+        image: otel/opentelemetry-collector-contrib:0.75.0
         imagePullPolicy: IfNotPresent
         volumeMounts:
           - mountPath: /data
