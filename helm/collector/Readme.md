@@ -6,7 +6,6 @@
 
 > default values are at : https://github.com/open-telemetry/opentelemetry-helm-charts/blob/main/charts/opentelemetry-collector/values.yaml
 
-> helm search repo open-telemetry --version
 
 # To search for specific version of collector
 
@@ -15,12 +14,12 @@
 
 # To get the template ( here the version of chart not app)
 
-> helm template opentelemetry-collector open-telemetry/opentelemetry-collector --version 0.54.2   -f ./collector-values.yml > temp.yml
+> helm template opentelemetry-collector open-telemetry/opentelemetry-collector --version 0.57.1   -f ./collector-values.yml > temp.yml
 
 # To install the collector 
 
-> helm install opentelemetry-collector open-telemetry/opentelemetry-collector --version 0.54.2   -f ./collector-values.yml
+> helm install opentelemetry-collector open-telemetry/opentelemetry-collector --version 0.57.1   -f ./collector-values.yml
 
 # To update helm if you change any value in values.yml
 
-> helm upgrade opentelemetry-collector open-telemetry/opentelemetry-collector --version 0.54.2   -f ./collector-values.yml 
+> helm upgrade opentelemetry-collector open-telemetry/opentelemetry-collector --version 0.57.1   -f ./collector-values.yml 

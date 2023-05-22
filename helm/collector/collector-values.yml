@@ -34,7 +34,7 @@ ports:
     hostPort: 8888
     protocol: TCP
 config:
-  processors:
+  connectors:
     spanmetrics:
         metrics_exporter: prometheus
         #latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 100ms, 250ms]
@@ -71,11 +71,10 @@ config:
       metrics:
         receivers: [otlp]
         exporters: [logging, prometheus]
-      traces: null
       traces: 
         receivers: [otlp]
         exporters: [logging, otlp]
       traces/dummy:
-        receivers: [otlp]
-        processors: [spanmetrics]
-        exporters: [logging]
+        receivers: [spanmetrics]
+        #processors: [spanmetrics]
+        exporters: [prometheus]
