@@ -1,6 +1,60 @@
-version: "3"
+version: "3.9"
+
+x-environment: &oncall-environment
+  DATABASE_TYPE: sqlite3
+  BROKER_TYPE: redis
+  #BASE_URL: $DOMAIN
+  #SECRET_KEY: $SECRET_KEY
+  BASE_URL: http://localhost:8080
+  SECRET_KEY: my_random_secret_must_be_more_than_32_characters_long
+  REDIS_URI: redis://redis:6379/0
+  DJANGO_SETTINGS_MODULE: settings.hobby
+  CELERY_WORKER_QUEUE: "default,critical,long,slack,telegram,webhook,retry,celery"
+  CELERY_WORKER_CONCURRENCY: "1"
+  CELERY_WORKER_MAX_TASKS_PER_CHILD: "100"
+  CELERY_WORKER_SHUTDOWN_INTERVAL: "65m"
+  CELERY_WORKER_BEAT_ENABLED: "True"
+  GRAFANA_API_URL: http://grafana:3000
+
+
+
 services:
-  
+
+  oncall_db_migration:
+    image: grafana/oncall:v1.2.21
+    command: python manage.py migrate --noinput
+    environment: *oncall-environment
+    volumes:
+      - oncall_data:/var/lib/oncall
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  engine:
+    image: grafana/oncall:v1.2.21
+    ports:
+      - "8080:8080"
+    command: >
+      sh -c "uwsgi --ini uwsgi.ini"
+    environment: *oncall-environment
+    volumes:
+      - oncall_data:/var/lib/oncall
+    depends_on:
+      oncall_db_migration:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  celery:
+    image: grafana/oncall:v1.2.21
+    command: sh -c "./celery_with_exporter.sh"
+    environment: *oncall-environment
+    depends_on:
+      oncall_db_migration:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
   order-service:
     build : ./order-service/
     environment:
@@ -11,7 +65,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/order
       - RESTAURANT_URL=http://restaurant-service:9081
     ports :
-      - "8080:8080"
+      - "9080:8080"
     logging:
       driver: loki
       options:
@@ -79,9 +133,21 @@ services:
       - "61613:61613"
 
   redis:
-    image: redis
-    ports:
-      - "6379:6379"
+    image: redis:7.0.5
+    expose:
+      - 6379
+    volumes:
+      - redis_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 500m
+          cpus: "0.5"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 5s
+      interval: 5s
+      retries: 10
 
   # Collector
   otel-collector:
@@ -155,12 +221,21 @@ services:
       - ./configuration/grafana/grafana-bootstrap.ini:/etc/grafana/grafana.ini
       - ./configuration/grafana/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
     environment:
-      - GF_AUTH_ANONYMOUS_ENABLED=true
-      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
-      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      #- GF_AUTH_ANONYMOUS_ENABLED=true
+      #- GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      #- GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=grafana-oncall-app
+      #- GF_INSTALL_PLUGINS=grafana-oncall-app
     ports:
       - "3000:3000"
     healthcheck:
       interval: 5s
       retries: 10
       test: wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
+
+
+volumes:
+  oncall_data:
+  redis_data:

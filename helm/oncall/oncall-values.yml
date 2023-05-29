@@ -1,0 +1,8 @@
+mariadb:
+  enabled: false
+
+postgresql:
+  enabled: true
+
+database:
+  type: postgresql

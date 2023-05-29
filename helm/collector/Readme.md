@@ -23,3 +23,15 @@
 # To update helm if you change any value in values.yml
 
 > helm upgrade opentelemetry-collector open-telemetry/opentelemetry-collector --version 0.57.1   -f ./collector-values.yml 
+
+
+
+
+# Following is for grafana oncall but not tested
+> helm repo add grafana https://grafana.github.io/helm-charts
+> helm repo update
+> helm search repo grafana/oncall  --versions
+
+ helm template grafana-oncall grafana/oncall --version 1.2.28   -f ./oncall-values.yml > temp.yml
+
+ helm install grafana-oncall grafana/oncall --version 1.2.28   -f ./oncall-values.yml

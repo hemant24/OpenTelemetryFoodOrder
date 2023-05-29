@@ -36,7 +36,7 @@ ports:
 config:
   connectors:
     spanmetrics:
-        metrics_exporter: prometheus
+        #metrics_exporter: prometheus
         #latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 100ms, 250ms]
         dimensions:
           - name: http.method
@@ -74,7 +74,9 @@ config:
       traces: 
         receivers: [otlp]
         exporters: [logging, otlp]
-      traces/dummy:
+      traces/in:
+        receivers: [otlp]
+        exporters: [spanmetrics]
+      metrics/out:
         receivers: [spanmetrics]
-        #processors: [spanmetrics]
         exporters: [prometheus]
