@@ -40,7 +40,8 @@ services:
     environment:
       - DB=mongodb://mongo/rating
       - SERVICE_NAME=rating-service
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:5555
+      #- OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:5556 if using http
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:5555 
     ports :
       - "9083:9083"
     logging:
@@ -98,7 +99,7 @@ services:
       #- "8889:8889"   # Prometheus exporter metrics
       #- "13133:13133" # health_check extension
       - "5555:5555"   # OTLP gRPC receiver
-      #- "4318:4318"   # OTLP http receiver
+      - "5556:5556" # OTLP http receiver
       #- "55679:55679" # zpages extension
 
   tempo:

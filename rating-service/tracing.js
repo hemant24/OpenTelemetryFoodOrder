@@ -13,7 +13,7 @@ const { MongooseInstrumentation } = require('@opentelemetry/instrumentation-mong
 
 const {
   OTLPTraceExporter,
-} = require("@opentelemetry/exporter-trace-otlp-grpc");
+} = require("@opentelemetry/exporter-trace-otlp-grpc"); // = require("@opentelemetry/exporter-trace-otlp-http"); If, using http
 
 
 const { MeterProvider, PeriodicExportingMetricReader, View, 
@@ -21,7 +21,7 @@ const { MeterProvider, PeriodicExportingMetricReader, View,
 
 const { 
   OTLPMetricExporter 
-} = require('@opentelemetry/exporter-metrics-otlp-grpc');
+} = require('@opentelemetry/exporter-metrics-otlp-grpc'); // = require("'@opentelemetry/exporter-metrics-otlp-http"); If, using http
 
 const { Resource } = require('@opentelemetry/resources');
 const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions');
@@ -64,6 +64,7 @@ const sdk = new opentelemetry.NodeSDK({
   traceExporter: new OTLPTraceExporter({
     // optional - default url is http://localhost:4318/v1/traces
     url: collectorUrl,
+    //url: collectorUrl + '/v1/traces' , //If, using HTTP
     // optional - collection of custom headers to be sent with each request, empty by default
     headers: {},
   })
