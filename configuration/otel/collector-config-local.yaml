@@ -18,13 +18,16 @@ connectors:
       - name: http.route
       - name: otel.library.name
     dimensions_cache_size: 1000
+    #aggregation_temporality: "AGGREGATION_TEMPORALITY_DELTA"   
     aggregation_temporality: "AGGREGATION_TEMPORALITY_CUMULATIVE"   
-
+    exemplars:
+      enabled: true
+      
 exporters:
   logging:
     loglevel: debug
   prometheus:
-    endpoint: otel-collector:6666
+    endpoint: 0.0.0.0:6666
     namespace: default
   otlp:
     endpoint: tempo:4317

@@ -50,6 +50,23 @@ services:
         loki-url: http://localhost:3100/loki/api/v1/push
         loki-external-labels: job=dockerlogs,owner=hemant,environment=development
 
+  point-service:
+    build : ./point-service/
+    environment:
+      - APP_PORT=9084
+      - OTEL_SERVICE_NAME=point-service
+      - OTEL_TRACES_EXPORTER=console,otlp
+      - OTEL_METRICS_EXPORTER=console,otlp
+      - OTEL_SDK_DISABLED=false
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:5555 
+    ports :
+      - "9084:9084"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://localhost:3100/loki/api/v1/push
+        loki-external-labels: job=dockerlogs,owner=hemant,environment=development
+
   db :
     image : postgres:11.7
     ports : 
@@ -86,7 +103,7 @@ services:
 
   # Collector
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.75.0
+    image: otel/opentelemetry-collector-contrib:0.82.0
     #command: [ "--config=/etc/otel-collector-config.yaml" ]
     command: [ "--config=/data/otel/collector-config-local.yaml" ]
     #volumes:
@@ -100,6 +117,7 @@ services:
       #- "13133:13133" # health_check extension
       - "5555:5555"   # OTLP gRPC receiver
       - "5556:5556" # OTLP http receiver
+      - "6666:6666"
       #- "55679:55679" # zpages extension
 
   tempo:
