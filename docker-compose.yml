@@ -52,11 +52,12 @@ services:
 
   point-service:
     build : ./point-service/
+    #image : hemant24/point-service
     environment:
       - APP_PORT=9084
       - OTEL_SERVICE_NAME=point-service
-      - OTEL_TRACES_EXPORTER=console,otlp
-      - OTEL_METRICS_EXPORTER=console,otlp
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=otlp
       - OTEL_SDK_DISABLED=false
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:5555 
     ports :
@@ -106,6 +107,7 @@ services:
     image: otel/opentelemetry-collector-contrib:0.82.0
     #command: [ "--config=/etc/otel-collector-config.yaml" ]
     command: [ "--config=/data/otel/collector-config-local.yaml" ]
+    #command: [ "--config=/data/otel/collector-config-grafana-cloud.yaml" ]
     #volumes:
     #  - ./configuration/otel/collector-config-local.yaml:/etc/otel-collector-config.yaml
     volumes :
@@ -124,7 +126,6 @@ services:
     image: grafana/tempo:2.0.1
     #command: [ "-search.enabled=true", "-config.file=/etc/tempo.yaml" ]
     command: ["-config.file=/etc/tempo.yaml" ]
-    container_name: tempo
     hostname: tempo
     volumes:
       - ./configuration/tempo/tempo-config.yaml:/etc/tempo.yaml
@@ -157,7 +158,6 @@ services:
 
   loki:
     image: grafana/loki:2.3.0
-    container_name: loki
     ports:
       - 3100:3100
     command: -config.file=/etc/loki/local-config.yaml
