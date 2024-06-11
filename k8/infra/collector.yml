@@ -11,8 +11,10 @@ data:
             endpoint: 0.0.0.0:5555
 
     processors:
+      k8sattributes:   
+    connectors:
       spanmetrics:
-        metrics_exporter: prometheus
+        #metrics_exporter: prometheus
         #latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 100ms, 250ms]
         dimensions:
           - name: http.method
@@ -20,10 +22,11 @@ data:
           - name: http.status_code
           - name: http.route
           - name: otel.library.name
+          - name: k8s.pod.name
         dimensions_cache_size: 1000
         aggregation_temporality: "AGGREGATION_TEMPORALITY_CUMULATIVE"   
 
-    exporters:
+    exporters:  
       logging:
         loglevel: debug
       prometheus:
@@ -41,12 +44,15 @@ data:
           exporters: [logging, prometheus]
         traces:
           receivers: [otlp]
+          processors: [k8sattributes]
           exporters: [logging, otlp]
-        traces/dummy:
+        traces/in:
           receivers: [otlp]
-          processors: [spanmetrics]
-          exporters: [logging]
-
+          processors: [k8sattributes]
+          exporters: [spanmetrics]
+        metrics/out:
+          receivers: [spanmetrics]
+          exporters: [prometheus]
 ---
 
 apiVersion: apps/v1
@@ -80,7 +86,7 @@ spec:
                 path: otel-agent-config.yaml
       containers:
       - name: collector
-        image: otel/opentelemetry-collector-contrib:latest
+        image: otel/opentelemetry-collector-contrib:0.75.0
         imagePullPolicy: IfNotPresent
         volumeMounts:
           - mountPath: /data

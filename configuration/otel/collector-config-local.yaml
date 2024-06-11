@@ -4,10 +4,12 @@ receivers:
     protocols:
       grpc:
         endpoint: 0.0.0.0:5555
+      http:
+        endpoint: 0.0.0.0:5556
 
-processors:
+connectors:
   spanmetrics:
-    metrics_exporter: prometheus
+    #metrics_exporter: prometheus
     #latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 100ms, 250ms]
     dimensions:
       - name: http.method
@@ -16,14 +18,16 @@ processors:
       - name: http.route
       - name: otel.library.name
     dimensions_cache_size: 1000
+    #aggregation_temporality: "AGGREGATION_TEMPORALITY_DELTA"   
     aggregation_temporality: "AGGREGATION_TEMPORALITY_CUMULATIVE"   
-
-#https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/prometheusexporter
+    exemplars:
+      enabled: true
+      
 exporters:
   logging:
     loglevel: debug
   prometheus:
-    endpoint: ':6666'
+    endpoint: 0.0.0.0:6666
     namespace: default
     enable_open_metrics : true
     resource_to_telemetry_conversion :
@@ -41,7 +45,9 @@ service:
     traces:
       receivers: [otlp]
       exporters: [logging, otlp]
-    traces/dummy:
+    traces/in:
       receivers: [otlp]
-      processors: [spanmetrics]
-      exporters: [logging]
+      exporters: [spanmetrics]
+    metrics/out:
+      receivers: [spanmetrics]
+      exporters: [prometheus]

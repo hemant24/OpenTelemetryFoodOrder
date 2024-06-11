@@ -13,7 +13,7 @@ const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http');
 
 const {
   OTLPTraceExporter,
-} = require("@opentelemetry/exporter-trace-otlp-grpc");
+} = require("@opentelemetry/exporter-trace-otlp-http"); // = require("@opentelemetry/exporter-trace-otlp-http"); If, using http, grpc
 
 
 const { MeterProvider, PeriodicExportingMetricReader, View, 
@@ -21,14 +21,14 @@ const { MeterProvider, PeriodicExportingMetricReader, View,
 
 const { 
   OTLPMetricExporter 
-} = require('@opentelemetry/exporter-metrics-otlp-grpc');
+} = require("@opentelemetry/exporter-metrics-otlp-http");  //= require('@opentelemetry/exporter-metrics-otlp-http'); If, using http, grpc
 
 const { Resource } = require('@opentelemetry/resources');
 const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions');
 
 const { HistogramAggregator } = require('@opentelemetry/sdk-metrics/build/src/aggregator');
 
-const collectorUrl = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? 'http://localhost:5555';
+const collectorUrl = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? 'http://localhost:5556';
 const serviceName = process.env.SERVICE_NAME ?? 'rating-service';
 
 
@@ -64,6 +64,7 @@ const sdk = new opentelemetry.NodeSDK({
   traceExporter: new OTLPTraceExporter({
     // optional - default url is http://localhost:4318/v1/traces
     url: collectorUrl,
+    //url: collectorUrl + '/v1/traces' , //If, using HTTP
     // optional - collection of custom headers to be sent with each request, empty by default
     headers: {},
   })

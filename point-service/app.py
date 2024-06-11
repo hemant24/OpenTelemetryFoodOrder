@@ -29,4 +29,5 @@ def ordercancelled():
      points -= 1;
      return ""
 
-app.run(host="0.0.0.0",port=appPort, debug=True)
+if __name__ == '__main__':
+     app.run(host="0.0.0.0",port=appPort, debug=True)

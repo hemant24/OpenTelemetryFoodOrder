@@ -42,9 +42,28 @@ services:
     environment:
       - DB=mongodb://mongo/rating
       - SERVICE_NAME=rating-service
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:5555
+      #- OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:5556 if using http
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:5555 
     ports :
       - "9083:9083"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://localhost:3100/loki/api/v1/push
+        loki-external-labels: job=dockerlogs,owner=hemant,environment=development
+
+  point-service:
+    build : ./point-service/
+    #image : hemant24/point-service
+    environment:
+      - APP_PORT=9084
+      - OTEL_SERVICE_NAME=point-service
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_SDK_DISABLED=false
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:5555 
+    ports :
+      - "9084:9084"
     logging:
       driver: loki
       options:
@@ -87,9 +106,10 @@ services:
 
   # Collector
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
+    image: otel/opentelemetry-collector-contrib:0.82.0
     #command: [ "--config=/etc/otel-collector-config.yaml" ]
     command: [ "--config=/data/otel/collector-config-local.yaml" ]
+    #command: [ "--config=/data/otel/collector-config-grafana-cloud.yaml" ]
     #volumes:
     #  - ./configuration/otel/collector-config-local.yaml:/etc/otel-collector-config.yaml
     volumes :
@@ -100,15 +120,14 @@ services:
       #- "8889:8889"   # Prometheus exporter metrics
       #- "13133:13133" # health_check extension
       - "5555:5555"   # OTLP gRPC receiver
+      - "5556:5556" # OTLP http receiver
       - "6666:6666"
-      #- "4318:4318"   # OTLP http receiver
       #- "55679:55679" # zpages extension
 
   tempo:
-    image: grafana/tempo:latest
+    image: grafana/tempo:2.0.1
     #command: [ "-search.enabled=true", "-config.file=/etc/tempo.yaml" ]
     command: ["-config.file=/etc/tempo.yaml" ]
-    container_name: tempo
     hostname: tempo
     volumes:
       - ./configuration/tempo/tempo-config.yaml:/etc/tempo.yaml
@@ -141,13 +160,12 @@ services:
 
   loki:
     image: grafana/loki:2.3.0
-    container_name: loki
     ports:
       - 3100:3100
     command: -config.file=/etc/loki/local-config.yaml
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:9.5.1
     hostname: grafana 
     depends_on:
       #tempo:

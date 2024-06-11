@@ -99,7 +99,7 @@ spec:
                 path : tempo-overrides.yaml
       containers:
       - name: tempo
-        image: grafana/tempo:latest
+        image: grafana/tempo:2.0.1
         imagePullPolicy: IfNotPresent
         volumeMounts:
           - mountPath: /data

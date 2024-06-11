@@ -8,4 +8,6 @@ scenarios:
     flow:
       - get:
           url: "/dummy/error/random"
+      - get:
+          url: "http://localhost:9083/dummy/error/random"
 

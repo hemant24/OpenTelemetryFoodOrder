@@ -15,17 +15,33 @@ data:
     - rules.yaml
 
   scrape_configs:
+    - job_name: 'collector_metrics'
+      scrape_interval: 5s
+      static_configs:
+        - targets: [ 'collector-service:8888' ]
     - job_name: 'collector'
       scrape_interval: 5s
       static_configs:
         - targets: [ 'collector-service:6666' ]
-
+    - job_name: 'k8metrics'
+      scrape_interval: 5s
+      static_configs:
+        - targets: [ 'kube-state-metrics:8080' ]
+    - job_name: 'kubernetes-nodes-cadvisor'
+      scrape_interval: 10s
+      scrape_timeout: 10s
+      scheme: https  # remove if you want to scrape metrics on insecure port
+      tls_config:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      kubernetes_sd_configs:
+        - role: node
  rules: |
   groups:
     - name: APM-Test
       rules:
         - alert: High Latency for service order-services
-          expr: (rate(default_latency_sum{span_kind=~"SPAN_KIND_SERVER",http_method=~"GET|POST|PUT|DELETE", http_route='/v1/order/{orderId}'}[1m])/rate(default_latency_count{span_kind=~"SPAN_KIND_SERVER",http_method=~"GET|POST|PUT|DELETE", http_route='/v1/order/{orderId}'}[1m])) > 5
+          expr: (rate(default_latency_milliseconds_sum{span_kind=~"SPAN_KIND_SERVER",http_method=~"GET|POST|PUT|DELETE", http_route='/v1/order/{orderId}'}[1m])/rate(default_latency_milliseconds_count{span_kind=~"SPAN_KIND_SERVER",http_method=~"GET|POST|PUT|DELETE", http_route='/v1/order/{orderId}'}[1m])) > 5
           for: 5m
           annotations:
             title: High Latency for service order-services

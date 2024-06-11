@@ -18,6 +18,26 @@ spec:
       - name: restaurant
         image: hemant24/restaurant:latest
         imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /app/health
+            port: 9081
+            scheme: HTTP
+          initialDelaySeconds: 300
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /app/health
+            port: 9081
+            scheme: HTTP
+          initialDelaySeconds: 300
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
         env:
           - name: SPRING_DATASOURCE_URL
             value: jdbc:postgresql://postgres-service:5432/restaurant
