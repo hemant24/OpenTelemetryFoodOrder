@@ -3,12 +3,13 @@ package com.talentica.dapr.orderservice.service;
 import com.talentica.dapr.orderservice.controller.dto.OrderViewDto;
 import com.talentica.dapr.orderservice.controller.mapper.OrderMapper;
 import com.talentica.dapr.orderservice.event.DomainEventPublisher;
-import com.talentica.dapr.orderservice.event.OrderCancelled;
 import com.talentica.dapr.orderservice.event.OrderCreated;
 import com.talentica.dapr.orderservice.repository.OrderRepository;
 import com.talentica.dapr.orderservice.repository.entity.Order;
 import com.talentica.dapr.orderservice.repository.entity.OrderLineItem;
 import com.talentica.dapr.orderservice.service.external.RestaurantClient;
+import io.opentelemetry.instrumentation.annotations.SpanAttribute;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ public class OrderService {
     StateStoreService stateStoreService;*/
     public String createOrder(Order order){
         RestaurantClient.Restaurant restaurant = null;
+        someRandomAlgorithm(4000);
         try {
             restaurant = restaurantClient.get(order.getRestaurantId());
         }catch (Exception e){
@@ -55,6 +57,16 @@ public class OrderService {
         //stateStoreService.save("OrderId", orderId, 60);
         return orderId;
     }
+
+    @WithSpan
+    private void someRandomAlgorithm(@SpanAttribute Integer wait) {
+        try {
+            Thread.sleep(wait);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public OrderViewDto getOrder(String orderId){
         Order order = repository.findByOrderId(orderId);
         if(ObjectUtils.isEmpty(order)){

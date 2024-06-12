@@ -1,6 +1,7 @@
 package com.talentica.dapr.orderservice.controller;
 
 import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.metrics.DoubleGaugeBuilder;
 import io.opentelemetry.api.metrics.LongCounter;
 import io.opentelemetry.api.metrics.Meter;
 
@@ -23,6 +24,7 @@ public class CustomMetricController {
             .build();
 
     private LongCounter numberOfExecutions;
+
 
     @PostConstruct
     public void init(){
